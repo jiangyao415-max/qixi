@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>七夕 · 给你</title>
+<style>
+  :root{
+    --bg:#0a0a10;
+    --rose:#e8b4b8;
+    --red:#c23b4f;
+    --gold:#d4af7a;
+    --ink:#f5efe6;
+    --dim:rgba(245,239,230,0.35);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0; padding:0; width:100%; height:100%;
+    background:var(--bg); color:var(--ink);
+    font-family:"Songti SC","STSong","SimSun",serif;
+    overflow:hidden;
+  }
+  #app{position:relative; width:100vw; height:100vh; overflow:hidden;}
+
+  .screen{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none;
+    transition:opacity 1s ease;
+  }
+  .screen.active{opacity:1; pointer-events:auto;}
+
+  /* ---------- FORM SCREEN ---------- */
+  #formScreen .box{
+    width:90%; max-width:440px; text-align:center;
+    display:flex; flex-direction:column; gap:22px;
+  }
+  .eyebrow{
+    letter-spacing:0.35em; font-size:12px; color:var(--gold);
+    font-family:"Helvetica Neue",Arial,sans-serif; text-transform:uppercase;
+  }
+  .title-line{font-size:24px; line-height:1.6; color:var(--ink); font-weight:400;}
+  .title-line b{color:var(--rose); font-weight:600;}
+
+  .choice-row{display:flex; gap:16px; justify-content:center; margin-top:6px;}
+  .choice-btn{
+    flex:1; max-width:170px; background:none; border:1px solid var(--dim);
+    color:var(--ink); font-family:"Songti SC",serif; font-size:17px;
+    padding:22px 10px; border-radius:14px; cursor:pointer; transition:all .3s;
+  }
+  .choice-btn:hover, .choice-btn:active{border-color:var(--rose); color:var(--rose); background:rgba(232,180,184,0.06);}
+
+  .term-grid{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:4px;
+  }
+  .term-btn{
+    background:none; border:1px solid var(--dim); color:var(--ink);
+    font-family:"Songti SC",serif; font-size:16px; padding:14px 4px;
+    border-radius:10px; cursor:pointer; transition:all .25s;
+  }
+  .term-btn:hover, .term-btn:active{border-color:var(--rose); color:var(--rose); background:rgba(232,180,184,0.06);}
+
+  .back-btn{
+    background:none; border:none; color:var(--dim); font-size:13px;
+    font-family:"Helvetica Neue",Arial,sans-serif; letter-spacing:0.1em;
+    cursor:pointer; margin-top:4px;
+  }
+  .back-btn:hover{color:var(--rose);}
+
+  .btn{
+    background:none; border:1px solid var(--rose); color:var(--rose);
+    font-family:"Helvetica Neue",Arial,sans-serif; letter-spacing:0.2em;
+    font-size:13px; padding:14px 0; border-radius:999px; cursor:pointer;
+    transition:all .3s;
+  }
+  .btn:hover{background:var(--rose); color:var(--bg);}
+
+  #linkBox{display:flex; flex-direction:column; gap:14px; margin-top:6px;}
+  #linkText{
+    font-size:12px; word-break:break-all; color:var(--dim);
+    font-family:"Helvetica Neue",Arial,sans-serif; border:1px dashed rgba(245,239,230,0.2);
+    padding:12px; border-radius:8px; line-height:1.6;
+  }
+  .hint{font-size:12px; color:var(--dim); font-family:"Helvetica Neue",Arial,sans-serif; line-height:1.7;}
+
+  /* ---------- REVEAL SCREEN ---------- */
+  #revealScreen{overflow:hidden;}
+
+  .type-word{
+    position:relative; z-index:8; font-size:30px; text-align:center;
+    padding:0 16px; transition:opacity 0.9s ease;
+  }
+  .type-word.fade-out{opacity:0;}
+  .type-word .ch{opacity:0; display:inline-block; animation:chIn .35s ease forwards;}
+  @keyframes chIn{
+    from{opacity:0; transform:translateY(6px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+
+  .bless-wall{position:absolute; inset:0; z-index:3;}
+  .bless-wall.erasing{
+    -webkit-mask-image:linear-gradient(to right, transparent 50%, black 50%);
+    mask-image:linear-gradient(to right, transparent 50%, black 50%);
+    -webkit-mask-size:200% 100%; mask-size:200% 100%;
+    -webkit-mask-position:100% 0; mask-position:100% 0;
+    animation:wipeErase 1s linear forwards;
+  }
+  @keyframes wipeErase{
+    to{ -webkit-mask-position:0% 0; mask-position:0% 0; }
+  }
+  .bless-item{
+    position:absolute; opacity:0; white-space:nowrap; color:var(--ink);
+    animation:blessPop .45s ease forwards;
+  }
+  @keyframes blessPop{
+    from{opacity:0; transform:translate(-50%,-50%) scale(.8);}
+    to{opacity:.85; transform:translate(-50%,-50%) scale(1);}
+  }
+
+  .bless-wall.fade-out{transition:opacity 1.1s ease; opacity:0;}
+
+  .most-like{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    z-index:10; opacity:0; font-size:clamp(34px, 9vw, 52px); color:var(--rose); letter-spacing:.06em;
+    transition:opacity 1.1s ease; text-align:center; padding:0 20px;
+    font-family:"Xingkai SC","STXingkai","华文行楷",serif;
+  }
+  .most-like.show{opacity:1;}
+
+  /* ---------- LOVE SCREEN ---------- */
+  #loveScreen{overflow:hidden;}
+  .love-field{position:absolute; inset:0; z-index:4;}
+  .love-pop{
+    position:absolute; opacity:0; color:var(--rose); will-change:transform,opacity;
+    animation:popFloat linear forwards;
+  }
+  .love-pop.heart-c{color:var(--red);}
+  .love-pop.gold-c{color:var(--gold);}
+  @keyframes popFloat{
+    0%{opacity:0; transform:translateY(0) scale(.7);}
+    18%{opacity:1; transform:translateY(calc(var(--dist) * 0.18)) scale(1);}
+    75%{opacity:.95;}
+    100%{opacity:0; transform:translateY(var(--dist)) scale(1.05);}
+  }
+  .spark{
+    position:absolute; width:5px; height:5px; border-radius:50%; background:var(--gold);
+    opacity:1; animation:sparkBurst .9s ease-out forwards;
+  }
+  @keyframes sparkBurst{
+    to{opacity:0; transform:translate(var(--sx), var(--sy)) scale(0.2);}
+  }
+  .bubble{
+    position:absolute; border-radius:50%; pointer-events:none; opacity:0;
+    border:1px solid rgba(245,239,230,0.4);
+    background:radial-gradient(circle at 35% 30%, rgba(245,239,230,0.18), rgba(245,239,230,0.02));
+    animation:popFloat linear forwards;
+  }
+
+  .start-gate{
+    position:fixed; inset:0; background:var(--bg); z-index:100;
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none; transition:opacity .6s ease;
+  }
+  .start-gate.show{opacity:1; pointer-events:auto;}
+  .gate-inner{
+    font-size:18px; color:var(--rose); letter-spacing:.2em; cursor:pointer;
+    border:1px solid var(--dim); padding:16px 36px; border-radius:999px;
+    font-family:"Songti SC",serif; transition:all .3s;
+  }
+  .gate-inner:active{border-color:var(--rose); background:rgba(232,180,184,0.08);}
+
+  .skip{
+    position:fixed; bottom:18px; right:18px; z-index:50;
+    font-size:11px; color:var(--dim); font-family:"Helvetica Neue",Arial,sans-serif;
+    letter-spacing:0.1em; background:none; border:none; cursor:pointer;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- FORM SCREEN -->
+  <div class="screen active" id="formScreen">
+
+    <div class="box" id="step1">
+      <div class="eyebrow">七夕 · Qixi</div>
+      <div class="title-line">这份心意<br>想送给——</div>
+      <div class="choice-row">
+        <button class="choice-btn" data-gender="male">送给男生 ♂</button>
+        <button class="choice-btn" data-gender="female">送给女生 ♀</button>
+      </div>
+    </div>
+
+    <div class="box" id="step2" style="display:none;">
+      <div class="eyebrow">选一个称呼</div>
+      <div class="title-line">你平时怎么称呼TA？</div>
+      <div class="term-grid" id="termGrid"></div>
+      <button class="back-btn" id="backBtn1">‹ 重新选择</button>
+    </div>
+
+    <div class="box" id="step3" style="display:none;">
+      <div class="eyebrow">专属链接已生成</div>
+      <div class="title-line" id="chosenTermLabel"></div>
+      <div id="linkBox">
+        <div id="linkText"></div>
+        <button class="btn" id="copyBtn">复制链接</button>
+        <div class="hint">把这个链接发给TA，TA点开就能看到啦 💌</div>
+      </div>
+      <button class="back-btn" id="backBtn2">‹ 重新选择</button>
+    </div>
+
+  </div>
+
+  <!-- REVEAL SCREEN -->
+  <div class="screen" id="revealScreen">
+    <div class="type-word" id="typeWord"></div>
+    <div class="bless-wall" id="blessWall"></div>
+    <div class="most-like" id="mostLike"></div>
+  </div>
+
+  <!-- LOVE SCREEN -->
+  <div class="screen" id="loveScreen">
+    <div class="love-field" id="loveField"></div>
+  </div>
+
+  <button class="skip" id="skipBtn" style="display:none;">重新播放 ↻</button>
+
+  <div class="start-gate" id="startGate">
+    <div class="gate-inner" id="gateInner">点击开始 💗</div>
+  </div>
+  <audio id="bgmAudio" src="bgm.m4a" loop preload="auto"></audio>
+</div>
+
+<script>
+(function(){
+  var params = new URLSearchParams(window.location.search);
+  var toName = params.get('to');
+
+  var formScreen = document.getElementById('formScreen');
+  if(toName){ formScreen.classList.remove('active'); formScreen.style.display = 'none'; }
+  var revealScreen = document.getElementById('revealScreen');
+  var loveScreen = document.getElementById('loveScreen');
+  var skipBtn = document.getElementById('skipBtn');
+
+  function rand(min,max){ return Math.random()*(max-min)+min; }
+  function escapeHtml(s){ var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+  // ---------- FORM LOGIC ----------
+  var step1 = document.getElementById('step1');
+  var step2 = document.getElementById('step2');
+  var step3 = document.getElementById('step3');
+  var termGrid = document.getElementById('termGrid');
+  var chosenTermLabel = document.getElementById('chosenTermLabel');
+  var linkText = document.getElementById('linkText');
+  var copyBtn = document.getElementById('copyBtn');
+
+  var terms = {
+    male:   ['老公','宝宝','亲爱的','达令','崽崽','男神','小猪猪','小可爱','傻瓜'],
+    female: ['老婆','宝贝','亲爱的','达令','崽崽','女神','小猫咪','小可爱','傻瓜']
+  };
+
+  document.querySelectorAll('.choice-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var gender = btn.getAttribute('data-gender');
+      termGrid.innerHTML = '';
+      terms[gender].forEach(function(term){
+        var b = document.createElement('button');
+        b.className = 'term-btn';
+        b.textContent = term;
+        b.addEventListener('click', function(){ chooseTerm(term); });
+        termGrid.appendChild(b);
+      });
+      step1.style.display = 'none';
+      step2.style.display = 'flex';
+    });
+  });
+
+  document.getElementById('backBtn1').addEventListener('click', function(){
+    step2.style.display = 'none';
+    step1.style.display = 'flex';
+  });
+  document.getElementById('backBtn2').addEventListener('click', function(){
+    step3.style.display = 'none';
+    step2.style.display = 'flex';
+  });
+
+  function chooseTerm(term){
+    var url = new URL(window.location.href);
+    url.search = '';
+    url.searchParams.set('to', term);
+    var finalUrl = url.toString();
+    chosenTermLabel.innerHTML = '你选的称呼是 <b>' + term + '</b>';
+    linkText.textContent = finalUrl;
+    step2.style.display = 'none';
+    step3.style.display = 'flex';
+    copyBtn.textContent = '复制链接';
+    copyBtn.onclick = function(){
+      navigator.clipboard && navigator.clipboard.writeText(finalUrl).then(function(){
+        copyBtn.textContent = '已复制 ✓';
+        setTimeout(function(){ copyBtn.textContent = '复制链接'; }, 1600);
+      }).catch(function(){
+        var r = document.createRange(); r.selectNode(linkText);
+        window.getSelection().removeAllRanges(); window.getSelection().addRange(r);
+        document.execCommand('copy');
+        copyBtn.textContent = '已复制 ✓';
+      });
+    };
+  }
+
+  // ---------- REVEAL LOGIC ----------
+  var blessings = ['无忧无虑','不内耗','一生平安','自由自在','永远快乐',
+                    '乐观开朗','天天开心','生活甜蜜','心想事成','永远坚强',
+                    '被爱包围','万事胜意','世界偏爱你'];
+
+  function startReveal(name){
+    formScreen.classList.remove('active');
+    revealScreen.classList.add('active');
+    skipBtn.style.display = 'block';
+    typewriterName(name);
+  }
+
+  function typewriterName(name){
+    var typeWord = document.getElementById('typeWord');
+    typeWord.innerHTML = '';
+    typeWord.classList.remove('fade-out');
+    var prefix = '希望我的';
+    var full = prefix + name;
+    var delay = 0;
+    Array.from(full).forEach(function(ch, i){
+      var span = document.createElement('span');
+      span.className = 'ch';
+      span.textContent = ch === ' ' ? '\u00A0' : ch;
+      span.style.animationDelay = delay + 's';
+      if(i >= prefix.length){ span.style.color = 'var(--rose)'; span.style.fontWeight='600'; }
+      typeWord.appendChild(span);
+      delay += 0.11;
+    });
+    setTimeout(fillBlessWall, (delay + 0.7) * 1000);
+  }
+
+  function fillBlessWall(){
+    var wall = document.getElementById('blessWall');
+    wall.innerHTML = '';
+    wall.classList.remove('fade-out');
+    var w = window.innerWidth, h = window.innerHeight;
+    var cols = Math.max(3, Math.ceil(w / 105));
+    var rows = Math.max(6, Math.ceil(h / 68));
+    var cellW = 100 / cols, cellH = 100 / rows;
+    var cells = [];
+    for(var r = 0; r < rows; r++){ for(var c = 0; c < cols; c++){ cells.push({r:r,c:c}); } }
+    cells.sort(function(){ return Math.random() - 0.5; });
+    var colorPool = ['var(--ink)', 'var(--rose)'];
+    var sizePool = [13, 16, 19, 23, 27, 32];
+    cells.forEach(function(cell, i){
+      var word = blessings[Math.floor(Math.random() * blessings.length)];
+      var el = document.createElement('div');
+      el.className = 'bless-item';
+      el.textContent = word;
+      var jx = (Math.random() - 0.5) * cellW * 0.35;
+      var jy = (Math.random() - 0.5) * cellH * 0.35;
+      el.style.left = (cell.c * cellW + cellW / 2 + jx) + '%';
+      el.style.top = (cell.r * cellH + cellH / 2 + jy) + '%';
+      el.style.fontSize = sizePool[Math.floor(Math.random() * sizePool.length)] + 'px';
+      el.style.color = colorPool[Math.floor(Math.random() * colorPool.length)];
+      el.style.animationDelay = (Math.floor(i / 3) * 0.05) + 's';
+      wall.appendChild(el);
+    });
+    var fillTime = Math.ceil(cells.length / 3) * 0.05 + 0.5;
+    setTimeout(startFadeOut, fillTime * 1000);
+  }
+
+  function startFadeOut(){
+    var wall = document.getElementById('blessWall');
+    var typeWord = document.getElementById('typeWord');
+    wall.classList.add('fade-out');
+    typeWord.classList.add('fade-out');
+    setTimeout(showMostLike, 1300);
+  }
+
+  function showMostLike(){
+    var el = document.getElementById('mostLike');
+    el.textContent = '最最最最最最最喜欢你';
+    el.classList.add('show');
+    setTimeout(function(){
+      el.classList.remove('show');
+      startLoveScreen();
+    }, 1500);
+  }
+
+  // ---------- LOVE SCREEN ----------
+  var loveTimer = null, sparkTimer = null, cornerTimer = null, bottomTimer = null, centerTimer = null;
+  var loveEmojis = ['❤','❤','❤','🎈','🎈','🎈','🍰','🍰','🍰','✨'];
+
+  function startLoveScreen(){
+    revealScreen.classList.remove('active');
+    loveScreen.classList.add('active');
+    spawnLoveLoop();
+  }
+
+  function spawnPop(field, words, opts){
+    opts = opts || {};
+    var el = document.createElement('div');
+    var pick = Math.random();
+    if(pick < 0.42){
+      el.className = 'love-pop heart-c';
+      el.textContent = loveEmojis[Math.floor(rand(0, loveEmojis.length))];
+      el.style.fontSize = rand(16, 30) + 'px';
+    } else if(pick < 0.56){
+      el.className = 'love-pop gold-c';
+      el.textContent = toName;
+      el.style.fontSize = rand(16, 26) + 'px';
+    } else {
+      el.className = 'love-pop' + (Math.random() < 0.25 ? ' gold-c' : '');
+      el.textContent = words[Math.floor(rand(0, words.length))];
+      el.style.fontSize = rand(15, 25) + 'px';
+    }
+    var x = (opts.x != null) ? opts.x : rand(0, 100);
+    var y = (opts.y != null) ? opts.y : rand(2, 98);
+    var distMin = opts.distMin || 60, distMax = opts.distMax || 240;
+    var dist = -(rand(distMin, distMax));
+    var dur = rand(4, 7);
+    el.style.left = x + 'vw';
+    el.style.top = y + 'vh';
+    el.style.setProperty('--dist', dist + 'px');
+    el.style.animationDuration = dur + 's';
+    field.appendChild(el);
+    setTimeout(function(){ el.remove(); }, dur * 1000 + 100);
+  }
+
+  function spawnCornerSeed(field, words){
+    var anchors = [
+      {x:4,y:5},{x:96,y:5},{x:4,y:95},{x:96,y:95},
+      {x:50,y:4},{x:50,y:96},{x:3,y:50},{x:97,y:50}
+    ];
+    var a = anchors[Math.floor(rand(0, anchors.length))];
+    spawnPop(field, words, {x: a.x + rand(-4, 4), y: a.y + rand(-4, 4)});
+  }
+
+  function spawnBottomRise(field, words){
+    spawnPop(field, words, {x: rand(2, 98), y: rand(90, 102), distMin: 130, distMax: 300});
+  }
+
+  function spawnCenterSeed(field, words){
+    spawnPop(field, words, {x: rand(10, 90), y: rand(32, 68)});
+  }
+
+  function spawnSpark(field){
+    var el = document.createElement('span');
+    el.className = 'spark';
+    var x = rand(5, 95), y = rand(5, 95);
+    var ang = rand(0, Math.PI * 2), dist = rand(18, 46);
+    el.style.left = x + 'vw';
+    el.style.top = y + 'vh';
+    el.style.setProperty('--sx', Math.cos(ang) * dist + 'px');
+    el.style.setProperty('--sy', Math.sin(ang) * dist + 'px');
+    field.appendChild(el);
+    setTimeout(function(){ el.remove(); }, 950);
+  }
+
+  function spawnLoveLoop(){
+    var field = document.getElementById('loveField');
+    var words = ['我喜欢你', '我爱你', '喜欢你', '爱你', '想你', '抱抱你', '亲一个', '只想你', '爱你哦', '想抱你'];
+
+    // initial dense burst so the screen is already packed full right away
+    var burstCount = 55;
+    for(var i = 0; i < burstCount; i++){
+      (function(delay){ setTimeout(function(){ spawnPop(field, words); }, delay); })(rand(0, 1400));
+    }
+    // seed corners/edges and the bottom band right away too
+    for(var j = 0; j < 12; j++){
+      (function(delay){ setTimeout(function(){ spawnCornerSeed(field, words); }, delay); })(rand(0, 1400));
+    }
+    for(var k = 0; k < 10; k++){
+      (function(delay){ setTimeout(function(){ spawnBottomRise(field, words); }, delay); })(rand(0, 1400));
+    }
+    for(var m = 0; m < 18; m++){
+      (function(delay){ setTimeout(function(){ spawnCenterSeed(field, words); }, delay); })(rand(0, 1400));
+    }
+
+    loveTimer = setInterval(function(){
+      var burst = Math.floor(rand(3, 6));
+      for(var i = 0; i < burst; i++){ spawnPop(field, words); }
+    }, 180);
+    cornerTimer = setInterval(function(){ spawnCornerSeed(field, words); }, 240);
+    bottomTimer = setInterval(function(){ spawnBottomRise(field, words); }, 200);
+    centerTimer = setInterval(function(){ spawnCenterSeed(field, words); }, 170);
+    sparkTimer = setInterval(function(){ spawnSpark(field); }, 260);
+  }
+
+  skipBtn.addEventListener('click', function(){ window.location.reload(); });
+
+  if(toName){
+    var startGate = document.getElementById('startGate');
+    var gateInner = document.getElementById('gateInner');
+    var bgmAudio = document.getElementById('bgmAudio');
+    startGate.classList.add('show');
+    gateInner.addEventListener('click', function(){
+      startGate.classList.remove('show');
+      bgmAudio.currentTime = 0;
+      bgmAudio.play().catch(function(){});
+      setTimeout(function(){ startReveal(toName); }, 400);
+    });
+  }
+})();
+</script>
+</body>
+</html>
